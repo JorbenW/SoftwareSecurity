@@ -1,0 +1,31 @@
+name: SCA Pipeline (Trivy)
+
+# 1. Run on every check-in (push & pull_request)
+# 2. Run on a schedule (Elke nacht om 03:00)
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+  schedule:
+    - cron: '0 3 * * *'
+
+jobs:
+  sca-scan:
+    name: Run SCA Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Trivy scant het hele bestandssysteem (zoals package-lock.json) op kwetsbare dependencies
+      # exit-code: '1' zorgt ervoor dat de pipeline faalt (blokkeert) als er iets gevonden wordt.
+      - name: Perform SCA Analysis with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: false
+          format: 'table'
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
