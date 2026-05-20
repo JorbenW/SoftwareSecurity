@@ -1,0 +1,26 @@
+name: SAST Pipeline (Semgrep)
+
+# 1. Run on every check-in (push & pull_request)
+# 2. Run on a schedule (Elke nacht om 02:00)
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+  schedule:
+    - cron: '0 2 * * *'
+
+jobs:
+  sast-scan:
+    name: Run SAST Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # De Semgrep actie zal standaard falen (blocken) als er kwetsbaarheden in de code zitten
+      - name: Perform Semgrep Analysis
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: "p/security-audit"
