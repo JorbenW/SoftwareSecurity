@@ -1,0 +1,36 @@
+name: DAST Pipeline (OWASP ZAP)
+
+# 1. Run on every check-in (push & pull_request)
+# 2. Run on a schedule (Elke nacht om 05:00)
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+  schedule:
+    - cron: '0 5 * * *'
+
+jobs:
+  dast-scan:
+    name: Run DAST Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # DAST heeft een draaiende applicatie nodig. 
+      # We starten de officiële Juice Shop Docker container op de achtergrond.
+      - name: Start Juice Shop Container
+        run: |
+          docker run -d -p 3000:3000 bkimminich/juice-shop
+          echo "Waiting for Juice Shop to boot..."
+          sleep 20 
+
+      # We sturen OWASP ZAP (Baseline Scan) af op de zojuist gestarte container
+      # fail_action: true zorgt ervoor dat de pipeline blokkeert bij gevonden kwetsbaarheden
+      - name: Perform DAST Analysis with OWASP ZAP
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: 'http://localhost:3000'
+          fail_action: true
